@@ -235,6 +235,9 @@
     body{ padding:0 16px 60px; }
     .shared, .method, .results{ padding:20px; }
     .section-head{ flex-direction:column; }
+    table.breakdown{ min-width:0; font-size:12px; }
+    table.breakdown th, table.breakdown td{ padding:9px 6px; }
+    table.breakdown thead th{ font-size:10px; letter-spacing:.03em; }
   }
   @media (prefers-reduced-motion: reduce){ .split-seg{ transition:none; } }
 </style>
@@ -307,10 +310,12 @@
       <div><span id="name-b-label">Partner</span><strong id="pct-b">50%</strong></div>
     </div>
 
-    <table class="breakdown">
-      <thead><tr><th>Shared bill</th><th>Total</th><th id="th-a">You</th><th id="th-b">Partner</th></tr></thead>
-      <tbody id="breakdown-body"></tbody>
-    </table>
+    <div class="table-wrap">
+      <table class="breakdown">
+        <thead><tr><th>Shared bill</th><th>Total</th><th id="th-a">You</th><th id="th-b">Partner</th></tr></thead>
+        <tbody id="breakdown-body"></tbody>
+      </table>
+    </div>
 
     <div class="summary-cards">
       <div class="summary-card" data-partner="a">
