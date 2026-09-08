@@ -6,190 +6,251 @@
 <title>Fair Share — split bills by income</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#EFEAE0;
-    --surface:#FBF9F4;
-    --ink:#25231F;
-    --muted:#6B6558;
-    --line:#D8D0BE;
-    --a:#4A3B5C;
-    --a-tint-bg:#F1EEF4;
-    --b:#B8863B;
-    --b-tint-bg:#FBF4E6;
-    --negative:#A23B3B;
+    --bg:#EEF1F6;
+    --surface:#FFFFFF;
+    --surface-alt:#F7F9FC;
+    --ink:#0F172A;
+    --muted:#64748B;
+    --faint:#94A3B8;
+    --line:#E2E8F0;
+    --line-strong:#CBD5E1;
+    --navy:#0B2545;
+    --a:#2563EB;
+    --a-tint-bg:#EFF4FF;
+    --b:#0D9488;
+    --b-tint-bg:#ECFBF8;
+    --positive:#16A34A;
+    --positive-tint:#F0FDF4;
+    --negative:#DC2626;
+    --negative-tint:#FEF2F2;
+    --shadow-sm:0 1px 2px rgba(15,23,42,.05);
+    --shadow-md:0 1px 3px rgba(15,23,42,.06), 0 8px 24px -8px rgba(15,23,42,.12);
+    --mono:'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   *{ box-sizing:border-box; }
   body{
     margin:0;
-    background:var(--paper);
+    background:var(--bg);
     color:var(--ink);
     font-family:'Inter', sans-serif;
     line-height:1.5;
-    padding:48px 24px 80px;
+    padding:0 24px 80px;
     -webkit-font-smoothing:antialiased;
   }
-  .page{ max-width:880px; margin:0 auto; }
+  .page{ max-width:900px; margin:0 auto; }
 
   button, input{ font-family:inherit; }
-  button:focus-visible, input:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+  button:focus-visible, input:focus-visible{ outline:2px solid var(--a); outline-offset:2px; }
 
-  .hero h1{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:clamp(28px, 4vw, 44px);
-    line-height:1.15;
-    letter-spacing:-0.01em;
-    margin:0 0 14px;
-    max-width:16ch;
+  .topbar{
+    display:flex; align-items:center; gap:10px;
+    max-width:900px; margin:0 auto; padding:22px 0 0;
   }
-  .hero .sub{ color:var(--muted); font-size:17px; max-width:58ch; margin:0 0 16px; }
-  .hero .instruction{ color:var(--muted); font-size:14px; margin:0 0 36px; }
+  .topbar .mark{
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(155deg, var(--a), var(--navy));
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:14px; flex-shrink:0;
+    box-shadow:var(--shadow-sm);
+  }
+  .topbar .brand{ font-weight:700; font-size:15px; letter-spacing:-0.01em; }
+  .topbar .tag{
+    margin-left:auto; font-size:12px; color:var(--muted);
+    background:var(--surface); border:1px solid var(--line);
+    padding:5px 10px; border-radius:100px;
+  }
 
-  h2{ font-family:'Fraunces', serif; font-size:22px; font-weight:500; margin:0 0 4px; }
-  .hint{ color:var(--muted); font-size:14px; margin:0 0 18px; }
+  .hero{ padding:28px 0 8px; }
+  .hero h1{
+    font-family:'Inter', sans-serif;
+    font-weight:800;
+    font-size:clamp(26px, 3.6vw, 38px);
+    line-height:1.18;
+    letter-spacing:-0.02em;
+    margin:0 0 12px;
+    max-width:18ch;
+    color:var(--navy);
+  }
+  .hero .sub{ color:var(--muted); font-size:16px; max-width:58ch; margin:0 0 6px; }
+  .hero .instruction{ color:var(--faint); font-size:13px; margin:0 0 32px; text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+
+  h2{ font-family:'Inter', sans-serif; font-size:17px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
+  .hint{ color:var(--muted); font-size:13.5px; margin:0 0 18px; }
+
+  .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:4px; }
 
   .ledger{
     display:flex;
     border:1px solid var(--line);
-    border-radius:10px;
+    border-radius:14px;
     overflow:hidden;
     background:var(--surface);
-    margin-bottom:28px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow-md);
   }
-  .ledger-col{ flex:1; padding:26px 28px 30px; min-width:0; }
-  .ledger-col[data-partner="a"]{ background:var(--a-tint-bg); border-right:1px solid var(--line); }
-  .ledger-col[data-partner="b"]{ background:var(--b-tint-bg); }
+  .ledger-col{ flex:1; padding:24px 26px 28px; min-width:0; position:relative; }
+  .ledger-col[data-partner="a"]{ border-right:1px solid var(--line); }
+  .ledger-col[data-partner="a"]::before, .ledger-col[data-partner="b"]::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+  .ledger-col[data-partner="a"]::before{ background:var(--a); }
+  .ledger-col[data-partner="b"]::before{ background:var(--b); }
 
   .name-input{
-    font-family:'Fraunces', serif;
-    font-size:22px;
-    font-weight:500;
+    font-family:'Inter', sans-serif;
+    font-size:19px;
+    font-weight:700;
     border:none;
     background:transparent;
     border-bottom:2px solid transparent;
     padding:2px 0 6px;
     width:100%;
     color:var(--ink);
+    letter-spacing:-0.01em;
   }
   .name-input:focus{ outline:none; border-bottom-color:currentColor; }
   [data-partner="a"] .name-input{ color:var(--a); }
   [data-partner="b"] .name-input{ color:var(--b); }
 
-  .field-label{ display:block; font-size:13px; color:var(--muted); margin:22px 0 6px; }
+  .field-label{ display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:20px 0 7px; }
   .income-input{
     width:100%;
-    font-family:'Fraunces', serif;
-    font-size:27px;
+    font-family:var(--mono);
+    font-size:25px;
+    font-weight:600;
     border:none;
     background:transparent;
     border-bottom:1px solid var(--line);
     padding:4px 0;
     color:var(--ink);
   }
-  .income-input:focus{ outline:none; border-bottom-color:var(--ink); }
-  .income-input::placeholder{ color:#B7AF9C; }
+  .income-input:focus{ outline:none; border-bottom-color:var(--a); }
+  .income-input::placeholder{ color:var(--faint); }
 
-  .expense-list{ margin-top:16px; display:flex; flex-direction:column; gap:6px; }
-  .expense-row{ display:flex; align-items:center; gap:8px; }
+  .expense-list{ margin-top:14px; display:flex; flex-direction:column; gap:2px; }
+  .expense-row{ display:flex; align-items:center; gap:8px; border-radius:6px; }
+  .expense-row:hover{ background:var(--surface-alt); }
   .desc-input{
     flex:1; min-width:0;
     border:none; border-bottom:1px solid var(--line);
-    background:transparent; padding:7px 2px; font-size:15px; color:var(--ink);
+    background:transparent; padding:8px 2px; font-size:14.5px; color:var(--ink);
   }
   .amount-wrap{
     display:flex; align-items:center;
     border-bottom:1px solid var(--line);
-    padding:7px 2px; width:104px; flex-shrink:0;
+    padding:8px 2px; width:104px; flex-shrink:0;
   }
-  .currency{ color:var(--muted); margin-right:2px; font-size:15px; }
+  .currency{ color:var(--faint); margin-right:2px; font-size:14px; font-family:var(--mono); }
   .amount-input{
     border:none; background:transparent; width:100%;
-    font-size:15px; color:var(--ink); text-align:right;
+    font-size:14.5px; font-family:var(--mono); font-weight:500; color:var(--ink); text-align:right;
   }
-  .desc-input:focus, .amount-input:focus{ outline:none; border-bottom-color:var(--ink); }
-  .desc-input::placeholder, .amount-input::placeholder{ color:#B7AF9C; }
+  .desc-input:focus, .amount-input:focus{ outline:none; border-bottom-color:var(--a); }
+  .desc-input::placeholder, .amount-input::placeholder{ color:var(--faint); }
 
   .remove-btn{
-    border:none; background:transparent; color:var(--muted);
+    border:none; background:transparent; color:var(--faint);
     font-size:18px; line-height:1; cursor:pointer; padding:5px 7px; border-radius:5px; flex-shrink:0;
   }
-  .remove-btn:hover{ background:rgba(0,0,0,0.06); color:var(--ink); }
+  .remove-btn:hover{ background:rgba(220,38,38,0.08); color:var(--negative); }
 
   .add-btn{
-    margin-top:14px; border:1px dashed #B7AF9C; background:transparent;
-    padding:8px 14px; border-radius:6px; font-size:14px; color:var(--muted); cursor:pointer;
+    margin-top:12px; border:1px dashed var(--line-strong); background:transparent;
+    padding:8px 14px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer;
   }
-  .add-btn:hover{ border-color:var(--ink); color:var(--ink); }
+  .add-btn:hover{ border-color:var(--a); color:var(--a); background:var(--a-tint-bg); }
 
   .shared, .method, .results{
-    background:var(--surface); border:1px solid var(--line); border-radius:10px;
-    padding:28px 28px 30px; margin-bottom:28px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:26px 26px 28px; margin-bottom:20px; box-shadow:var(--shadow-md);
   }
 
-  .toggle-group{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:8px; }
+  .toggle-group{ display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; margin-top:10px; background:var(--surface-alt); padding:3px; }
   .toggle-option{
-    border:none; background:var(--surface); padding:10px 16px;
-    font-size:14px; color:var(--muted); cursor:pointer;
+    border:none; background:transparent; padding:9px 15px; border-radius:6px;
+    font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer;
   }
-  .toggle-option + .toggle-option{ border-left:1px solid var(--line); }
-  .toggle-option.active{ background:var(--ink); color:var(--surface); }
-  .method-note{ margin-top:14px; color:var(--muted); font-size:14px; max-width:62ch; }
+  .toggle-option.active{ background:var(--ink); color:#fff; box-shadow:var(--shadow-sm); }
+  .method-note{ margin-top:14px; color:var(--muted); font-size:13.5px; max-width:62ch; }
 
   #income-hint{
-    display:none; color:var(--muted); font-size:14px; margin:0 0 22px;
-    padding:10px 14px; background:var(--paper); border-radius:6px;
+    display:none; color:var(--navy); font-size:13.5px; margin:0 0 22px;
+    padding:11px 14px; background:var(--a-tint-bg); border:1px solid #D7E3FC; border-radius:8px; font-weight:500;
   }
 
-  .split-bar{ display:flex; height:14px; border-radius:7px; overflow:hidden; background:var(--line); margin:6px 0 14px; }
+  .download-btn{
+    display:inline-flex; align-items:center; gap:7px; flex-shrink:0;
+    border:1px solid var(--line-strong); background:var(--surface);
+    padding:9px 14px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    box-shadow:var(--shadow-sm);
+  }
+  .download-btn:hover{ border-color:var(--a); color:var(--a); }
+  .download-btn svg{ width:15px; height:15px; flex-shrink:0; }
+
+  .split-bar{ display:flex; height:12px; border-radius:6px; overflow:hidden; background:var(--line); margin:14px 0 16px; }
   .split-seg{ transition:width 0.4s ease; }
   .seg-a{ background:var(--a); }
   .seg-b{ background:var(--b); }
-  .split-labels{ display:flex; justify-content:space-between; margin-bottom:34px; }
-  .split-labels div{ display:flex; flex-direction:column; gap:2px; }
-  .split-labels span{ font-size:14px; color:var(--muted); }
-  .split-labels strong{ font-family:'Fraunces', serif; font-size:32px; font-weight:600; }
+  .split-labels{ display:flex; justify-content:space-between; margin-bottom:30px; }
+  .split-labels div{ display:flex; flex-direction:column; gap:3px; }
+  .split-labels span{ font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .split-labels strong{ font-family:var(--mono); font-size:30px; font-weight:600; letter-spacing:-0.01em; }
   .split-labels div:first-child strong{ color:var(--a); }
   .split-labels div:last-child{ text-align:right; align-items:flex-end; }
   .split-labels div:last-child strong{ color:var(--b); }
 
-  table.breakdown{ width:100%; border-collapse:collapse; margin-bottom:30px; font-size:14px; }
-  table.breakdown th, table.breakdown td{ text-align:right; padding:10px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
-  table.breakdown th:first-child, table.breakdown td:first-child{ text-align:left; font-variant-numeric:normal; }
-  table.breakdown thead th{ color:var(--muted); font-weight:500; font-size:13px; }
-  tr.total-row td{ font-weight:600; border-top:2px solid var(--ink); border-bottom:none; }
+  .table-wrap{ overflow-x:auto; margin-bottom:26px; border:1px solid var(--line); border-radius:10px; }
+  table.breakdown{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:420px; }
+  table.breakdown th, table.breakdown td{ text-align:right; padding:11px 14px; font-variant-numeric:tabular-nums; font-family:var(--mono); }
+  table.breakdown th:first-child, table.breakdown td:first-child{ text-align:left; font-variant-numeric:normal; font-family:'Inter', sans-serif; }
+  table.breakdown thead th{ color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; background:var(--surface-alt); border-bottom:1px solid var(--line); }
+  table.breakdown tbody tr:not(.total-row):nth-child(even){ background:var(--surface-alt); }
+  table.breakdown tbody tr:not(.total-row){ border-bottom:1px solid var(--line); }
+  tr.total-row td{ font-weight:700; border-top:2px solid var(--ink); background:var(--surface); }
 
-  .summary-cards{ display:flex; gap:18px; flex-wrap:wrap; }
-  .summary-card{ flex:1; min-width:230px; border:1px solid var(--line); border-radius:8px; padding:20px; }
-  .summary-card h3{ font-family:'Fraunces', serif; font-size:18px; margin:0 0 14px; font-weight:500; }
+  .summary-cards{ display:flex; gap:16px; flex-wrap:wrap; }
+  .summary-card{ flex:1; min-width:230px; border:1px solid var(--line); border-radius:12px; padding:20px; background:var(--surface-alt); position:relative; overflow:hidden; }
+  .summary-card::before{ content:""; position:absolute; top:0; left:0; bottom:0; width:3px; }
+  .summary-card[data-partner="a"]::before{ background:var(--a); }
+  .summary-card[data-partner="b"]::before{ background:var(--b); }
+  .summary-card h3{ font-family:'Inter', sans-serif; font-size:15px; margin:0 0 14px; font-weight:700; letter-spacing:-0.01em; }
   .summary-card[data-partner="a"] h3{ color:var(--a); }
   .summary-card[data-partner="b"] h3{ color:var(--b); }
-  .summary-card dl{ margin:0; display:grid; grid-template-columns:1fr auto; row-gap:9px; column-gap:12px; }
-  .summary-card dt{ color:var(--muted); font-size:14px; }
-  .summary-card dd{ margin:0; font-size:14px; text-align:right; font-variant-numeric:tabular-nums; }
-  .summary-card .total-line{ border-top:1px solid var(--line); margin-top:5px; padding-top:9px; font-weight:600; color:var(--ink); }
+  .summary-card dl{ margin:0; display:grid; grid-template-columns:1fr auto; row-gap:10px; column-gap:12px; }
+  .summary-card dt{ color:var(--muted); font-size:13px; }
+  .summary-card dd{ margin:0; font-size:13.5px; text-align:right; font-family:var(--mono); font-weight:500; }
+  .summary-card .total-line{ border-top:1px solid var(--line-strong); margin-top:6px; padding-top:10px; font-weight:700; color:var(--ink); }
+  .positive{ color:var(--positive); }
   .negative{ color:var(--negative); }
 
-  footer{ margin-top:44px; color:var(--muted); font-size:13px; text-align:center; }
+  footer{ margin-top:36px; color:var(--faint); font-size:12.5px; text-align:center; }
 
   @media (max-width:720px){
     .ledger{ flex-direction:column; }
     .ledger-col[data-partner="a"]{ border-right:none; border-bottom:1px solid var(--line); }
-    .split-labels strong{ font-size:26px; }
-    body{ padding:32px 16px 60px; }
-    .shared, .method, .results{ padding:22px; }
+    .split-labels strong{ font-size:24px; }
+    body{ padding:0 16px 60px; }
+    .shared, .method, .results{ padding:20px; }
+    .section-head{ flex-direction:column; }
   }
   @media (prefers-reduced-motion: reduce){ .split-seg{ transition:none; } }
 </style>
 </head>
 <body>
+<div class="topbar">
+  <div class="mark">FS</div>
+  <div class="brand">FairShare</div>
+  <div class="tag">Income-based bill splitting</div>
+</div>
 <div class="page">
 
   <header class="hero">
     <h1>Split bills by what you actually earn.</h1>
     <p class="sub">Add your income, what each of you already pays on your own, and the bills you'll share. This works out a split based on that — not just an even 50/50.</p>
-    <p class="instruction">Fill in what's true for each of you below.</p>
+    <p class="instruction">Fill in what's true for each of you below</p>
   </header>
 
   <section class="ledger">
@@ -231,7 +292,13 @@
   </section>
 
   <section class="results">
-    <h2>What each of you pays</h2>
+    <div class="section-head">
+      <h2>What each of you pays</h2>
+      <button type="button" class="download-btn" id="download-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+        Download breakdown
+      </button>
+    </div>
     <p id="income-hint">Add both incomes above to see your split.</p>
 
     <div class="split-bar"><div class="split-seg seg-a" id="seg-a"></div><div class="split-seg seg-b" id="seg-b"></div></div>
@@ -273,6 +340,7 @@
 <script>
 (function(){
   let currentMethod = 'adjusted';
+  let lastData = null;
 
   function escapeHtml(str){
     return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -376,11 +444,72 @@
     const leftA = document.getElementById('sum-left-a');
     leftA.textContent = fmt(leftoverA) + '/mo';
     leftA.classList.toggle('negative', leftoverA < 0);
+    leftA.classList.toggle('positive', leftoverA >= 0);
     const leftB = document.getElementById('sum-left-b');
     leftB.textContent = fmt(leftoverB) + '/mo';
     leftB.classList.toggle('negative', leftoverB < 0);
+    leftB.classList.toggle('positive', leftoverB >= 0);
 
     document.getElementById('income-hint').style.display = (incomeA === 0 || incomeB === 0) ? 'block' : 'none';
+
+    lastData = {
+      nameA: nameA, nameB: nameB,
+      incomeA: incomeA, incomeB: incomeB,
+      method: currentMethod,
+      shareA: shareA, shareB: shareB,
+      shared: shared, sharedTotal: sharedTotal,
+      expensesA: expensesA, expensesB: expensesB,
+      indivTotalA: indivTotalA, indivTotalB: indivTotalB,
+      sharedA: sharedA, sharedB: sharedB,
+      totalCostA: totalCostA, totalCostB: totalCostB,
+      leftoverA: leftoverA, leftoverB: leftoverB
+    };
+  }
+
+  function csvCell(val){
+    const s = String(val);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function csvRow(cells){ return cells.map(csvCell).join(',') + '\r\n'; }
+
+  function downloadBreakdown(){
+    if (!lastData) return;
+    const d = lastData;
+    const methodLabel = d.method === 'gross' ? 'By gross income' : 'By income after required expenses';
+    let csv = '';
+    csv += csvRow(['FairShare breakdown']);
+    csv += csvRow(['Generated', new Date().toLocaleString()]);
+    csv += csvRow(['Split method', methodLabel]);
+    csv += csvRow([]);
+
+    csv += csvRow(['Person', 'Monthly income', 'Share of shared bills']);
+    csv += csvRow([d.nameA, d.incomeA, Math.round(d.shareA * 100) + '%']);
+    csv += csvRow([d.nameB, d.incomeB, Math.round(d.shareB * 100) + '%']);
+    csv += csvRow([]);
+
+    csv += csvRow(['Shared bill', 'Total', d.nameA, d.nameB]);
+    d.shared.forEach(function(item){
+      csv += csvRow([item.desc || 'Untitled bill', item.amount, Math.round(item.amount * d.shareA * 100) / 100, Math.round(item.amount * d.shareB * 100) / 100]);
+    });
+    csv += csvRow(['Total shared', d.sharedTotal, Math.round(d.sharedA * 100) / 100, Math.round(d.sharedB * 100) / 100]);
+    csv += csvRow([]);
+
+    csv += csvRow(['Summary', d.nameA, d.nameB]);
+    csv += csvRow(['Shared bills', Math.round(d.sharedA * 100) / 100, Math.round(d.sharedB * 100) / 100]);
+    csv += csvRow(["Own required expenses", d.indivTotalA, d.indivTotalB]);
+    csv += csvRow(['Total monthly cost', Math.round(d.totalCostA * 100) / 100, Math.round(d.totalCostB * 100) / 100]);
+    csv += csvRow(['Left over', Math.round(d.leftoverA * 100) / 100, Math.round(d.leftoverB * 100) / 100]);
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'fairshare-breakdown-' + date + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   document.addEventListener('DOMContentLoaded', function(){
@@ -414,6 +543,8 @@
         recalc();
       }
     });
+
+    document.getElementById('download-btn').addEventListener('click', downloadBreakdown);
 
     document.querySelectorAll('.toggle-option').forEach(function(btn){
       btn.addEventListener('click', function(){
