@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fair Share — split bills by income</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEAE0;
+    --surface:#FBF9F4;
+    --ink:#25231F;
+    --muted:#6B6558;
+    --line:#D8D0BE;
+    --a:#4A3B5C;
+    --a-tint-bg:#F1EEF4;
+    --b:#B8863B;
+    --b-tint-bg:#FBF4E6;
+    --negative:#A23B3B;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    padding:48px 24px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{ max-width:880px; margin:0 auto; }
+
+  button, input{ font-family:inherit; }
+  button:focus-visible, input:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+  .hero h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(28px, 4vw, 44px);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    margin:0 0 14px;
+    max-width:16ch;
+  }
+  .hero .sub{ color:var(--muted); font-size:17px; max-width:58ch; margin:0 0 16px; }
+  .hero .instruction{ color:var(--muted); font-size:14px; margin:0 0 36px; }
+
+  h2{ font-family:'Fraunces', serif; font-size:22px; font-weight:500; margin:0 0 4px; }
+  .hint{ color:var(--muted); font-size:14px; margin:0 0 18px; }
+
+  .ledger{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    background:var(--surface);
+    margin-bottom:28px;
+  }
+  .ledger-col{ flex:1; padding:26px 28px 30px; min-width:0; }
+  .ledger-col[data-partner="a"]{ background:var(--a-tint-bg); border-right:1px solid var(--line); }
+  .ledger-col[data-partner="b"]{ background:var(--b-tint-bg); }
+
+  .name-input{
+    font-family:'Fraunces', serif;
+    font-size:22px;
+    font-weight:500;
+    border:none;
+    background:transparent;
+    border-bottom:2px solid transparent;
+    padding:2px 0 6px;
+    width:100%;
+    color:var(--ink);
+  }
+  .name-input:focus{ outline:none; border-bottom-color:currentColor; }
+  [data-partner="a"] .name-input{ color:var(--a); }
+  [data-partner="b"] .name-input{ color:var(--b); }
+
+  .field-label{ display:block; font-size:13px; color:var(--muted); margin:22px 0 6px; }
+  .income-input{
+    width:100%;
+    font-family:'Fraunces', serif;
+    font-size:27px;
+    border:none;
+    background:transparent;
+    border-bottom:1px solid var(--line);
+    padding:4px 0;
+    color:var(--ink);
+  }
+  .income-input:focus{ outline:none; border-bottom-color:var(--ink); }
+  .income-input::placeholder{ color:#B7AF9C; }
+
+  .expense-list{ margin-top:16px; display:flex; flex-direction:column; gap:6px; }
+  .expense-row{ display:flex; align-items:center; gap:8px; }
+  .desc-input{
+    flex:1; min-width:0;
+    border:none; border-bottom:1px solid var(--line);
+    background:transparent; padding:7px 2px; font-size:15px; color:var(--ink);
+  }
+  .amount-wrap{
+    display:flex; align-items:center;
+    border-bottom:1px solid var(--line);
+    padding:7px 2px; width:104px; flex-shrink:0;
+  }
+  .currency{ color:var(--muted); margin-right:2px; font-size:15px; }
+  .amount-input{
+    border:none; background:transparent; width:100%;
+    font-size:15px; color:var(--ink); text-align:right;
+  }
+  .desc-input:focus, .amount-input:focus{ outline:none; border-bottom-color:var(--ink); }
+  .desc-input::placeholder, .amount-input::placeholder{ color:#B7AF9C; }
+
+  .remove-btn{
+    border:none; background:transparent; color:var(--muted);
+    font-size:18px; line-height:1; cursor:pointer; padding:5px 7px; border-radius:5px; flex-shrink:0;
+  }
+  .remove-btn:hover{ background:rgba(0,0,0,0.06); color:var(--ink); }
+
+  .add-btn{
+    margin-top:14px; border:1px dashed #B7AF9C; background:transparent;
+    padding:8px 14px; border-radius:6px; font-size:14px; color:var(--muted); cursor:pointer;
+  }
+  .add-btn:hover{ border-color:var(--ink); color:var(--ink); }
+
+  .shared, .method, .results{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:28px 28px 30px; margin-bottom:28px;
+  }
+
+  .toggle-group{ display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-top:8px; }
+  .toggle-option{
+    border:none; background:var(--surface); padding:10px 16px;
+    font-size:14px; color:var(--muted); cursor:pointer;
+  }
+  .toggle-option + .toggle-option{ border-left:1px solid var(--line); }
+  .toggle-option.active{ background:var(--ink); color:var(--surface); }
+  .method-note{ margin-top:14px; color:var(--muted); font-size:14px; max-width:62ch; }
+
+  #income-hint{
+    display:none; color:var(--muted); font-size:14px; margin:0 0 22px;
+    padding:10px 14px; background:var(--paper); border-radius:6px;
+  }
+
+  .split-bar{ display:flex; height:14px; border-radius:7px; overflow:hidden; background:var(--line); margin:6px 0 14px; }
+  .split-seg{ transition:width 0.4s ease; }
+  .seg-a{ background:var(--a); }
+  .seg-b{ background:var(--b); }
+  .split-labels{ display:flex; justify-content:space-between; margin-bottom:34px; }
+  .split-labels div{ display:flex; flex-direction:column; gap:2px; }
+  .split-labels span{ font-size:14px; color:var(--muted); }
+  .split-labels strong{ font-family:'Fraunces', serif; font-size:32px; font-weight:600; }
+  .split-labels div:first-child strong{ color:var(--a); }
+  .split-labels div:last-child{ text-align:right; align-items:flex-end; }
+  .split-labels div:last-child strong{ color:var(--b); }
+
+  table.breakdown{ width:100%; border-collapse:collapse; margin-bottom:30px; font-size:14px; }
+  table.breakdown th, table.breakdown td{ text-align:right; padding:10px 8px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  table.breakdown th:first-child, table.breakdown td:first-child{ text-align:left; font-variant-numeric:normal; }
+  table.breakdown thead th{ color:var(--muted); font-weight:500; font-size:13px; }
+  tr.total-row td{ font-weight:600; border-top:2px solid var(--ink); border-bottom:none; }
+
+  .summary-cards{ display:flex; gap:18px; flex-wrap:wrap; }
+  .summary-card{ flex:1; min-width:230px; border:1px solid var(--line); border-radius:8px; padding:20px; }
+  .summary-card h3{ font-family:'Fraunces', serif; font-size:18px; margin:0 0 14px; font-weight:500; }
+  .summary-card[data-partner="a"] h3{ color:var(--a); }
+  .summary-card[data-partner="b"] h3{ color:var(--b); }
+  .summary-card dl{ margin:0; display:grid; grid-template-columns:1fr auto; row-gap:9px; column-gap:12px; }
+  .summary-card dt{ color:var(--muted); font-size:14px; }
+  .summary-card dd{ margin:0; font-size:14px; text-align:right; font-variant-numeric:tabular-nums; }
+  .summary-card .total-line{ border-top:1px solid var(--line); margin-top:5px; padding-top:9px; font-weight:600; color:var(--ink); }
+  .negative{ color:var(--negative); }
+
+  footer{ margin-top:44px; color:var(--muted); font-size:13px; text-align:center; }
+
+  @media (max-width:720px){
+    .ledger{ flex-direction:column; }
+    .ledger-col[data-partner="a"]{ border-right:none; border-bottom:1px solid var(--line); }
+    .split-labels strong{ font-size:26px; }
+    body{ padding:32px 16px 60px; }
+    .shared, .method, .results{ padding:22px; }
+  }
+  @media (prefers-reduced-motion: reduce){ .split-seg{ transition:none; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <h1>Split bills by what you actually earn.</h1>
+    <p class="sub">Add your income, what each of you already pays on your own, and the bills you'll share. This works out a split based on that — not just an even 50/50.</p>
+    <p class="instruction">Fill in what's true for each of you below.</p>
+  </header>
+
+  <section class="ledger">
+    <div class="ledger-col" data-partner="a">
+      <input type="text" class="name-input" id="name-a" value="You" aria-label="Your name" />
+      <label class="field-label" for="income-a">Monthly income, after tax</label>
+      <input type="number" class="income-input" id="income-a" placeholder="0" min="0" step="1" />
+
+      <label class="field-label">Required expenses, yours alone</label>
+      <div class="expense-list" id="expenses-a"></div>
+      <button type="button" class="add-btn" data-target="a">+ Add required expense</button>
+    </div>
+
+    <div class="ledger-col" data-partner="b">
+      <input type="text" class="name-input" id="name-b" value="Partner" aria-label="Partner's name" />
+      <label class="field-label" for="income-b">Monthly income, after tax</label>
+      <input type="number" class="income-input" id="income-b" placeholder="0" min="0" step="1" />
+
+      <label class="field-label">Required expenses, theirs alone</label>
+      <div class="expense-list" id="expenses-b"></div>
+      <button type="button" class="add-btn" data-target="b">+ Add required expense</button>
+    </div>
+  </section>
+
+  <section class="shared">
+    <h2>Shared household bills</h2>
+    <p class="hint">Rent, utilities, groceries — anything you're paying together.</p>
+    <div class="expense-list" id="expenses-shared"></div>
+    <button type="button" class="add-btn" data-target="shared">+ Add shared bill</button>
+  </section>
+
+  <section class="method">
+    <h2>How to split it</h2>
+    <div class="toggle-group" role="radiogroup" aria-label="Split method">
+      <button type="button" class="toggle-option active" data-method="adjusted">By income after required expenses</button>
+      <button type="button" class="toggle-option" data-method="gross">By gross income</button>
+    </div>
+    <p class="method-note" id="method-note"></p>
+  </section>
+
+  <section class="results">
+    <h2>What each of you pays</h2>
+    <p id="income-hint">Add both incomes above to see your split.</p>
+
+    <div class="split-bar"><div class="split-seg seg-a" id="seg-a"></div><div class="split-seg seg-b" id="seg-b"></div></div>
+    <div class="split-labels">
+      <div><span id="name-a-label">You</span><strong id="pct-a">50%</strong></div>
+      <div><span id="name-b-label">Partner</span><strong id="pct-b">50%</strong></div>
+    </div>
+
+    <table class="breakdown">
+      <thead><tr><th>Shared bill</th><th>Total</th><th id="th-a">You</th><th id="th-b">Partner</th></tr></thead>
+      <tbody id="breakdown-body"></tbody>
+    </table>
+
+    <div class="summary-cards">
+      <div class="summary-card" data-partner="a">
+        <h3 id="summary-name-a">You</h3>
+        <dl>
+          <dt>Shared bills</dt><dd id="sum-shared-a">$0/mo</dd>
+          <dt>Your own required expenses</dt><dd id="sum-individual-a">$0/mo</dd>
+          <dt class="total-line">Total monthly cost</dt><dd class="total-line" id="sum-total-a">$0/mo</dd>
+          <dt>Left over</dt><dd id="sum-left-a">$0/mo</dd>
+        </dl>
+      </div>
+      <div class="summary-card" data-partner="b">
+        <h3 id="summary-name-b">Partner</h3>
+        <dl>
+          <dt>Shared bills</dt><dd id="sum-shared-b">$0/mo</dd>
+          <dt>Their own required expenses</dt><dd id="sum-individual-b">$0/mo</dd>
+          <dt class="total-line">Total monthly cost</dt><dd class="total-line" id="sum-total-b">$0/mo</dd>
+          <dt>Left over</dt><dd id="sum-left-b">$0/mo</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <footer>A planning tool to start the conversation — not a substitute for talking it through together.</footer>
+</div>
+
+<script>
+(function(){
+  let currentMethod = 'adjusted';
+
+  function escapeHtml(str){
+    return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function fmt(n){
+    const sign = n < 0 ? '-' : '';
+    return sign + '$' + Math.round(Math.abs(n)).toLocaleString('en-US');
+  }
+  function createRow(desc, amount){
+    const row = document.createElement('div');
+    row.className = 'expense-row';
+    row.innerHTML =
+      '<input type="text" class="desc-input" value="' + escapeHtml(desc) + '" placeholder="Description" aria-label="Expense name" />' +
+      '<div class="amount-wrap"><span class="currency">$</span><input type="number" class="amount-input" value="' + (amount || '') + '" min="0" step="1" placeholder="0" aria-label="Monthly amount" /></div>' +
+      '<button type="button" class="remove-btn" aria-label="Remove expense">&times;</button>';
+    return row;
+  }
+  function addRow(containerId, desc, amount){
+    document.getElementById(containerId).appendChild(createRow(desc, amount));
+  }
+  function getRows(containerId){
+    return Array.from(document.getElementById(containerId).querySelectorAll('.expense-row')).map(function(row){
+      return {
+        desc: row.querySelector('.desc-input').value,
+        amount: parseFloat(row.querySelector('.amount-input').value) || 0
+      };
+    });
+  }
+  function sumRows(rows){ return rows.reduce(function(s, r){ return s + r.amount; }, 0); }
+
+  function updateMethodNote(){
+    document.getElementById('method-note').textContent = currentMethod === 'adjusted'
+      ? "This looks at what's left after each of you covers your own required payments, then splits shared bills from there. It tends to feel fairer when one of you carries more individual debt."
+      : "This splits shared bills in proportion to your raw income, before anything else comes out of it.";
+  }
+
+  function recalc(){
+    const nameA = document.getElementById('name-a').value.trim() || 'Partner A';
+    const nameB = document.getElementById('name-b').value.trim() || 'Partner B';
+    const incomeA = parseFloat(document.getElementById('income-a').value) || 0;
+    const incomeB = parseFloat(document.getElementById('income-b').value) || 0;
+
+    const expensesA = getRows('expenses-a');
+    const expensesB = getRows('expenses-b');
+    const shared = getRows('expenses-shared');
+
+    const indivTotalA = sumRows(expensesA);
+    const indivTotalB = sumRows(expensesB);
+    const sharedTotal = sumRows(shared);
+
+    let baseA, baseB;
+    if (currentMethod === 'gross') {
+      baseA = incomeA; baseB = incomeB;
+    } else {
+      baseA = Math.max(incomeA - indivTotalA, 0);
+      baseB = Math.max(incomeB - indivTotalB, 0);
+    }
+    const totalBase = baseA + baseB;
+    const shareA = totalBase > 0 ? baseA / totalBase : 0.5;
+    const shareB = 1 - shareA;
+
+    document.getElementById('seg-a').style.width = (shareA * 100) + '%';
+    document.getElementById('seg-b').style.width = (shareB * 100) + '%';
+    document.getElementById('name-a-label').textContent = nameA;
+    document.getElementById('name-b-label').textContent = nameB;
+    document.getElementById('pct-a').textContent = Math.round(shareA * 100) + '%';
+    document.getElementById('pct-b').textContent = Math.round(shareB * 100) + '%';
+    document.getElementById('th-a').textContent = nameA;
+    document.getElementById('th-b').textContent = nameB;
+
+    const tbody = document.getElementById('breakdown-body');
+    tbody.innerHTML = '';
+    shared.forEach(function(item){
+      const amtA = item.amount * shareA;
+      const amtB = item.amount * shareB;
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + escapeHtml(item.desc || 'Untitled bill') + '</td><td>' + fmt(item.amount) + '</td><td>' + fmt(amtA) + '</td><td>' + fmt(amtB) + '</td>';
+      tbody.appendChild(tr);
+    });
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'total-row';
+    totalRow.innerHTML = '<td>Total shared</td><td>' + fmt(sharedTotal) + '</td><td>' + fmt(sharedTotal * shareA) + '</td><td>' + fmt(sharedTotal * shareB) + '</td>';
+    tbody.appendChild(totalRow);
+
+    const sharedA = sharedTotal * shareA;
+    const sharedB = sharedTotal * shareB;
+    const totalCostA = sharedA + indivTotalA;
+    const totalCostB = sharedB + indivTotalB;
+    const leftoverA = incomeA - totalCostA;
+    const leftoverB = incomeB - totalCostB;
+
+    document.getElementById('summary-name-a').textContent = nameA;
+    document.getElementById('summary-name-b').textContent = nameB;
+    document.getElementById('sum-shared-a').textContent = fmt(sharedA) + '/mo';
+    document.getElementById('sum-shared-b').textContent = fmt(sharedB) + '/mo';
+    document.getElementById('sum-individual-a').textContent = fmt(indivTotalA) + '/mo';
+    document.getElementById('sum-individual-b').textContent = fmt(indivTotalB) + '/mo';
+    document.getElementById('sum-total-a').textContent = fmt(totalCostA) + '/mo';
+    document.getElementById('sum-total-b').textContent = fmt(totalCostB) + '/mo';
+
+    const leftA = document.getElementById('sum-left-a');
+    leftA.textContent = fmt(leftoverA) + '/mo';
+    leftA.classList.toggle('negative', leftoverA < 0);
+    const leftB = document.getElementById('sum-left-b');
+    leftB.textContent = fmt(leftoverB) + '/mo';
+    leftB.classList.toggle('negative', leftoverB < 0);
+
+    document.getElementById('income-hint').style.display = (incomeA === 0 || incomeB === 0) ? 'block' : 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    addRow('expenses-a', 'Car payment', '');
+    addRow('expenses-a', 'Student loan', '');
+    addRow('expenses-b', 'Car payment', '');
+    addRow('expenses-b', 'Student loan', '');
+    addRow('expenses-shared', 'Rent', '');
+    addRow('expenses-shared', 'Utilities', '');
+    addRow('expenses-shared', 'Groceries', '');
+
+    document.querySelectorAll('.add-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const target = btn.dataset.target;
+        addRow('expenses-' + target, '', '');
+        const rows = document.getElementById('expenses-' + target).querySelectorAll('.expense-row');
+        rows[rows.length - 1].querySelector('.desc-input').focus();
+        recalc();
+      });
+    });
+
+    document.addEventListener('click', function(e){
+      if (e.target.classList.contains('remove-btn')) {
+        e.target.closest('.expense-row').remove();
+        recalc();
+      }
+    });
+
+    document.addEventListener('input', function(e){
+      if (e.target.matches('.amount-input, .income-input, .desc-input, .name-input')) {
+        recalc();
+      }
+    });
+
+    document.querySelectorAll('.toggle-option').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('.toggle-option').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentMethod = btn.dataset.method;
+        updateMethodNote();
+        recalc();
+      });
+    });
+
+    updateMethodNote();
+    recalc();
+  });
+})();
+</script>
+</body>
+</html>
