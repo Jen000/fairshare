@@ -190,6 +190,28 @@
   .download-btn:hover{ border-color:var(--a); color:var(--a); }
   .download-btn svg{ width:15px; height:15px; flex-shrink:0; }
 
+  .share-bar{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:var(--navy); border-radius:14px;
+    padding:20px 24px; margin-bottom:20px; box-shadow:var(--shadow-md);
+  }
+  .share-bar .share-text{ flex:1; min-width:220px; }
+  .share-bar .share-text strong{ display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+  .share-bar .share-text span{ display:block; color:#B9C4D9; font-size:13px; max-width:56ch; }
+  .share-btn{
+    display:inline-flex; align-items:center; gap:7px; flex-shrink:0;
+    border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08);
+    padding:10px 16px; border-radius:8px; font-size:13.5px; font-weight:600; color:#fff; cursor:pointer;
+  }
+  .share-btn:hover{ background:rgba(255,255,255,.16); }
+  .share-btn svg{ width:15px; height:15px; flex-shrink:0; }
+  .share-btn.copied{ background:var(--positive); border-color:var(--positive); }
+
+  #link-hint{
+    display:none; color:var(--navy); font-size:13.5px; margin:0 0 20px;
+    padding:12px 16px; background:var(--b-tint-bg); border:1px solid #BFEBE3; border-radius:10px; font-weight:500;
+  }
+
   .split-bar{ display:flex; height:12px; border-radius:6px; overflow:hidden; background:var(--line); margin:14px 0 16px; }
   .split-seg{ transition:width 0.4s ease; }
   .seg-a{ background:var(--a); }
@@ -255,6 +277,19 @@
     <p class="sub">Add your income, what each of you already pays on your own, and the bills you'll share. This works out a split based on that — not just an even 50/50.</p>
     <p class="instruction">Fill in what's true for each of you below</p>
   </header>
+
+  <p id="link-hint"></p>
+
+  <section class="share-bar">
+    <div class="share-text">
+      <strong>Splitting this with a partner?</strong>
+      <span>Fill in your side, then copy this link and send it to them. Once they've filled in theirs, ask them to copy the link again and send it back to you — opening it will show the full breakdown to you both.</span>
+    </div>
+    <button type="button" class="share-btn" id="share-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+      <span class="share-btn-label">Copy shareable link</span>
+    </button>
+  </section>
 
   <section class="ledger">
     <div class="ledger-col" data-partner="a">
@@ -517,14 +552,83 @@
     URL.revokeObjectURL(url);
   }
 
+  function buildShareUrl(){
+    recalc();
+    const d = lastData;
+    const payload = {
+      nameA: d.nameA, nameB: d.nameB,
+      incomeA: d.incomeA, incomeB: d.incomeB,
+      method: d.method,
+      expensesA: d.expensesA, expensesB: d.expensesB,
+      shared: d.shared
+    };
+    const url = new URL(window.location.href);
+    url.hash = '';
+    url.searchParams.set('state', JSON.stringify(payload));
+    return url.toString();
+  }
+
+  function loadStateFromUrl(){
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('state');
+    if (!raw) return false;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return false;
+    }
+
+    document.getElementById('name-a').value = data.nameA || 'You';
+    document.getElementById('name-b').value = data.nameB || 'Partner';
+    document.getElementById('income-a').value = data.incomeA || '';
+    document.getElementById('income-b').value = data.incomeB || '';
+
+    document.getElementById('expenses-a').innerHTML = '';
+    document.getElementById('expenses-b').innerHTML = '';
+    document.getElementById('expenses-shared').innerHTML = '';
+    (Array.isArray(data.expensesA) ? data.expensesA : []).forEach(function(e){ addRow('expenses-a', e.desc, e.amount); });
+    (Array.isArray(data.expensesB) ? data.expensesB : []).forEach(function(e){ addRow('expenses-b', e.desc, e.amount); });
+    (Array.isArray(data.shared) ? data.shared : []).forEach(function(e){ addRow('expenses-shared', e.desc, e.amount); });
+    if (!document.getElementById('expenses-a').children.length) addRow('expenses-a', '', '');
+    if (!document.getElementById('expenses-b').children.length) addRow('expenses-b', '', '');
+    if (!document.getElementById('expenses-shared').children.length) addRow('expenses-shared', '', '');
+
+    if (data.method === 'gross') {
+      currentMethod = 'gross';
+      document.querySelectorAll('.toggle-option').forEach(function(b){ b.classList.toggle('active', b.dataset.method === 'gross'); });
+    }
+
+    const nameA = data.nameA || 'your partner';
+    const nameB = data.nameB || 'your partner';
+    const filledA = parseFloat(data.incomeA) > 0;
+    const filledB = parseFloat(data.incomeB) > 0;
+    const hint = document.getElementById('link-hint');
+    if (filledA && filledB) {
+      hint.textContent = "You're viewing a completed breakdown for " + nameA + ' and ' + nameB + '.';
+    } else if (filledA && !filledB) {
+      hint.textContent = "This link includes " + nameA + "'s info. Fill in your side below, then copy the link again and send it back so they can see the totals.";
+    } else if (filledB && !filledA) {
+      hint.textContent = "This link includes " + nameB + "'s info. Fill in your side below, then copy the link again and send it back so they can see the totals.";
+    } else {
+      hint.textContent = "Continuing a shared link — fill in what's missing, then copy the link again to send it back.";
+    }
+    hint.style.display = 'block';
+
+    return true;
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
-    addRow('expenses-a', 'Car payment', '');
-    addRow('expenses-a', 'Student loan', '');
-    addRow('expenses-b', 'Car payment', '');
-    addRow('expenses-b', 'Student loan', '');
-    addRow('expenses-shared', 'Rent', '');
-    addRow('expenses-shared', 'Utilities', '');
-    addRow('expenses-shared', 'Groceries', '');
+    const loadedFromLink = loadStateFromUrl();
+    if (!loadedFromLink) {
+      addRow('expenses-a', 'Car payment', '');
+      addRow('expenses-a', 'Student loan', '');
+      addRow('expenses-b', 'Car payment', '');
+      addRow('expenses-b', 'Student loan', '');
+      addRow('expenses-shared', 'Rent', '');
+      addRow('expenses-shared', 'Utilities', '');
+      addRow('expenses-shared', 'Groceries', '');
+    }
 
     document.querySelectorAll('.add-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
@@ -550,6 +654,22 @@
     });
 
     document.getElementById('download-btn').addEventListener('click', downloadBreakdown);
+
+    document.getElementById('share-btn').addEventListener('click', function(){
+      const btn = document.getElementById('share-btn');
+      const label = btn.querySelector('.share-btn-label');
+      const url = buildShareUrl();
+      function showCopied(){
+        label.textContent = 'Link copied!';
+        btn.classList.add('copied');
+        setTimeout(function(){ label.textContent = 'Copy shareable link'; btn.classList.remove('copied'); }, 2000);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(showCopied).catch(function(){ window.prompt('Copy this link to share:', url); });
+      } else {
+        window.prompt('Copy this link to share:', url);
+      }
+    });
 
     document.querySelectorAll('.toggle-option').forEach(function(btn){
       btn.addEventListener('click', function(){
